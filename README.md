@@ -1,35 +1,79 @@
 # SaaS Leads
 
-Base structure for the SaaS Leads platform.
+CRM leve para captacao e follow-up de leads, com projetos, imports, funil de status e mensagens via WhatsApp.
 
-## Quick start
+## Visao geral
+SaaS Leads organiza leads importados (Google Maps ou CSV), permite classificar por status e manter o historico de interacoes. A pagina de lead centraliza contato, localizacao, notas e mensagens.
 
-1) Copy env file:
+## Principais recursos
+- Projetos e imports para organizar bases.
+- Funil de status com contagem e cores por etapa.
+- Pesquisa e filtros por status, categoria, nota e termo.
+- Envio rapido para WhatsApp com template e variaveis.
+- Exportacao e importacao CSV.
 
+## Stack
+- PHP 8.x
+- MySQL
+- HTML + CSS
+
+## Comecando
+1. Copie o arquivo de ambiente.
 ```
 copy .env.example .env
 ```
-
-2) Install dependencies:
-
+2. Instale dependencias.
 ```
 composer install
 ```
-
-3) Run with PHP built-in server:
-
+3. Suba o servidor embutido do PHP.
 ```
 php -S localhost:8080 -t public
 ```
 
-## Notes
+## Variaveis de ambiente
+- `APP_ENV`
+- `APP_DEBUG`
+- `APP_URL`
+- `DB_DRIVER`
+- `DB_HOST`
+- `DB_PORT`
+- `DB_DATABASE`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `GOOGLE_MAPS_API_KEY`
 
-- Tailwind is loaded via CDN for now.
-- Add your Google Maps API key in `.env` when ready.
-- Database schema is in `database/schema.sql`.
-- Google Maps search uses `curl` in PHP (enable `ext-curl`).
-- Phase 1 screens: `/leads`, `/leads/new`, `/leads/show?id=1`, `/leads/edit?id=1`.
-- CSV export: `/leads/export` (respects filters).
-- Google Maps search: `/leads/search` (requires `GOOGLE_MAPS_API_KEY`).
-- Projects & imports: `/projects`, `/projects/new`, `/projects/show?id=1`, `/imports/new?project_id=1`.
-- CSV import columns used (0-based): B(1) Maps URL, F(5) Address, I(8) Phone, K(10) Mobile, O(14) Category, Q(16) Comments, R(17) Rating, S(18) Website.
+## Banco de dados
+- O schema esta em `database/schema.sql`.
+- O projeto usa MySQL por padrao.
+
+## Rotas principais
+- `/projects`
+- `/projects/show?id=1`
+- `/imports/new?project_id=1`
+- `/leads`
+- `/leads/new`
+- `/leads/show?id=1`
+- `/leads/edit?id=1`
+- `/leads/export`
+- `/leads/search`
+
+## CSV
+- Exportacao: `/leads/export` respeita filtros.
+- Importacao: coluna usada (0-based) B(1) Maps URL, F(5) Address, I(8) Phone, K(10) Mobile, O(14) Category, Q(16) Comments, R(17) Rating, S(18) Website.
+
+## WhatsApp
+- O link usa `https://wa.me/` com telefone normalizado.
+- Templates permitem variaveis `{nome}`, `{cidade}`, `{categoria}`.
+
+## Deploy (Vercel)
+- PHP no Vercel usa runtime comunitario (`vercel-php`).
+- Crie `api/index.php` apontando para `public/index.php` e um `vercel.json` com rotas.
+- Use um banco remoto e configure as variaveis no painel.
+
+## Contribuicao
+- Abra uma issue com contexto e passos de reproducao.
+- Envie PR pequeno e focado.
+
+## Licenca
+Privado.
