@@ -19,6 +19,39 @@
     </div>
   </div>
 
+  <?php
+    $currentOrder = (string) ($filters["order_by"] ?? "created_at");
+    $currentDir = strtoupper((string) ($filters["direction"] ?? "DESC"));
+    $baseParams = [
+      "status" => $filters["status"] ?? "",
+      "q" => $filters["q"] ?? "",
+      "category" => $filters["category"] ?? "",
+      "min_rating" => $filters["min_rating"] ?? "",
+      "project_id" => $filters["project_id"] ?? "",
+      "import_id" => $filters["import_id"] ?? "",
+    ];
+    $baseParams = array_filter($baseParams, fn ($value) => $value !== "" && $value !== null);
+    $sortUrl = function (string $field) use ($baseParams, $currentOrder, $currentDir): string {
+      $params = $baseParams;
+      $params["order_by"] = $field;
+      $params["direction"] = ($currentOrder === $field && $currentDir === "ASC") ? "DESC" : "ASC";
+      return "/leads?" . http_build_query($params);
+    };
+    $sortArrow = function (string $field) use ($currentOrder, $currentDir): string {
+      if ($currentOrder !== $field) {
+        return "";
+      }
+      return $currentDir === "ASC" ? " &uarr;" : " &darr;";
+    };
+    $returnUrl = "/leads";
+    if ($baseParams !== [] || $currentOrder !== "created_at" || $currentDir !== "DESC") {
+      $returnParams = $baseParams;
+      $returnParams["order_by"] = $currentOrder;
+      $returnParams["direction"] = $currentDir;
+      $returnUrl .= "?" . http_build_query($returnParams);
+    }
+  ?>
+
   <div class="grid md:grid-cols-4 gap-4 mt-6">
     <?php foreach (($statuses ?? []) as $key => $label): ?>
       <?php
@@ -105,17 +138,19 @@
       <label class="text-xs text-slate-400">Order by</label>
       <select name="order_by" class="select mt-2 text-sm">
         <?php
-          $orders = [
-            "created_at" => "Created",
-            "imported_at" => "Imported",
-            "name" => "Name",
-            "category" => "Category",
-            "rating" => "Rating",
-            "reviews_count" => "Reviews",
-            "city" => "City",
-            "state" => "State",
-          ];
-        ?>
+        $orders = [
+          "created_at" => "Created",
+          "imported_at" => "Imported",
+          "name" => "Name",
+          "category" => "Category",
+          "rating" => "Rating",
+          "reviews_count" => "Reviews",
+          "status" => "Status",
+          "score" => "Score",
+          "city" => "City",
+          "state" => "State",
+        ];
+      ?>
         <?php foreach ($orders as $value => $label): ?>
           <option value="<?= $value ?>" <?= ($filters["order_by"] ?? "created_at") === $value ? "selected" : "" ?>>
             <?= htmlspecialchars($label, ENT_QUOTES) ?>
@@ -137,10 +172,26 @@
     <table class="min-w-full text-sm table-spaced">
       <thead class="text-slate-400 bg-slate-900/60">
         <tr>
-          <th class="text-left py-2">Name</th>
-          <th class="text-left py-2">Rating</th>
-          <th class="text-left py-2">Status</th>
-          <th class="text-left py-2">Score</th>
+          <th class="text-left py-2">
+            <a href="<?= htmlspecialchars($sortUrl("name"), ENT_QUOTES) ?>" class="text-slate-300 hover:text-white">
+              Name<?= $sortArrow("name") ?>
+            </a>
+          </th>
+          <th class="text-left py-2">
+            <a href="<?= htmlspecialchars($sortUrl("rating"), ENT_QUOTES) ?>" class="text-slate-300 hover:text-white">
+              Rating<?= $sortArrow("rating") ?>
+            </a>
+          </th>
+          <th class="text-left py-2">
+            <a href="<?= htmlspecialchars($sortUrl("status"), ENT_QUOTES) ?>" class="text-slate-300 hover:text-white">
+              Status<?= $sortArrow("status") ?>
+            </a>
+          </th>
+          <th class="text-left py-2">
+            <a href="<?= htmlspecialchars($sortUrl("score"), ENT_QUOTES) ?>" class="text-slate-300 hover:text-white">
+              Score<?= $sortArrow("score") ?>
+            </a>
+          </th>
           <th class="text-left py-2">Actions</th>
         </tr>
       </thead>
@@ -150,6 +201,7 @@
             $waPhone = (string) ($lead["whatsapp_phone"] ?? "");
             $waLink = $waPhone !== "" ? "https://wa.me/" . $waPhone : "";
             $siteLink = (string) ($lead["website"] ?? "");
+            $mapsLink = (string) ($lead["google_maps_url"] ?? "");
             $statusKey = strtolower((string) ($lead["status"] ?? ""));
             $statusClass = preg_replace("/[^a-z0-9_-]+/", "", $statusKey);
           ?>
@@ -169,6 +221,11 @@
                     <path d="M20.5 3.5A10 10 0 0 0 3.9 19.3L3 22l2.8-.9A10 10 0 1 0 20.5 3.5Zm-8.5 16a8 8 0 0 1-4-1.1l-.3-.2-2 .7.6-2-.2-.3A8 8 0 1 1 12 19.5Zm4.5-5.1c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8.9-.1.1-.3.2-.5.1a6.6 6.6 0 0 1-2-1.3 7.5 7.5 0 0 1-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.5c.1-.2.1-.3.2-.5 0-.2 0-.4-.1-.5l-.7-1.6c-.2-.4-.4-.3-.6-.3h-.5c-.2 0-.5.1-.7.3-.2.2-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .2.2 2 3.1 5 4.4.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1-.1-.1-.2-.2-.4-.3Z"/>
                   </svg>
                 </a>
+                <a href="<?= htmlspecialchars($mapsLink, ENT_QUOTES) ?>" class="icon-btn maps <?= $mapsLink === "" ? "disabled" : "" ?>" target="_blank" rel="noopener" title="Maps">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2a7 7 0 0 0-7 7c0 5.2 6.1 12 6.4 12.3.3.3.9.3 1.2 0C12.9 21 19 14.2 19 9a7 7 0 0 0-7-7Zm0 9.4A2.4 2.4 0 1 1 14.4 9 2.4 2.4 0 0 1 12 11.4Z"/>
+                  </svg>
+                </a>
                 <a href="<?= htmlspecialchars($siteLink, ENT_QUOTES) ?>" class="icon-btn site <?= $siteLink === "" ? "disabled" : "" ?>" target="_blank" rel="noopener" title="Website">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.9 6h-3.1a15 15 0 0 0-1.3-3.3A8 8 0 0 1 18.9 8ZM12 4.1c.6.8 1.2 2 1.6 3.9H10.4c.4-1.9 1-3.1 1.6-3.9ZM4.9 8a8 8 0 0 1 4.4-3.3A15 15 0 0 0 8 8H4.9Zm0 8H8c.3 1.3.7 2.4 1.3 3.3A8 8 0 0 1 4.9 16Zm3.1-2h-3.5a8 8 0 0 1 0-4H8c-.1.7-.1 1.3-.1 2s0 1.3.1 2Zm4 6c-.6-.8-1.2-2-1.6-3.9h3.2c-.4 1.9-1 3.1-1.6 3.9Zm2-6H9.9c-.1-.7-.1-1.3-.1-2s0-1.3.1-2H14c.1.7.1 1.3.1 2s0 1.3-.1 2Zm.7 5.3c.6-.9 1-2 1.3-3.3h3.1a8 8 0 0 1-4.4 3.3ZM16 8c-.3-1.3-.7-2.4-1.3-3.3A8 8 0 0 1 19.1 8H16Zm4.1 2a8 8 0 0 1 0 4H16c.1-.7.1-1.3.1-2s0-1.3-.1-2h4.1Z"/>
@@ -185,6 +242,39 @@
                   </svg>
                 </a>
               </div>
+              <details class="quick-actions mt-3">
+                <summary class="text-xs text-slate-400">Quick actions</summary>
+                <div class="mt-2 flex flex-wrap gap-3 items-center">
+                  <?php if (!empty($templates)): ?>
+                    <form method="post" action="/leads/whatsapp" class="quick-form">
+                      <input type="hidden" name="lead_id" value="<?= (int) ($lead["id"] ?? 0) ?>" />
+                      <select name="template_id" class="select select-small" required>
+                        <option value="" selected disabled>Select template</option>
+                        <?php foreach (($templates ?? []) as $template): ?>
+                          <option value="<?= (int) ($template["id"] ?? 0) ?>">
+                            <?= htmlspecialchars((string) ($template["name"] ?? ""), ENT_QUOTES) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                      <button class="btn btn-secondary btn-small">WhatsApp</button>
+                    </form>
+                  <?php else: ?>
+                    <div class="text-xs text-slate-400">No WhatsApp templates yet.</div>
+                  <?php endif; ?>
+                  <form method="post" action="/leads/status" class="quick-form">
+                    <input type="hidden" name="lead_id" value="<?= (int) ($lead["id"] ?? 0) ?>" />
+                    <input type="hidden" name="return_url" value="<?= htmlspecialchars($returnUrl, ENT_QUOTES) ?>" />
+                    <select name="status" class="select select-small">
+                      <?php foreach (($statuses ?? []) as $value => $label): ?>
+                        <option value="<?= htmlspecialchars($value, ENT_QUOTES) ?>" <?= ($lead["status"] ?? "") === $value ? "selected" : "" ?>>
+                          <?= htmlspecialchars($label, ENT_QUOTES) ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
+                    <button class="btn btn-secondary btn-small">Update</button>
+                  </form>
+                </div>
+              </details>
             </td>
           </tr>
         <?php endforeach; ?>

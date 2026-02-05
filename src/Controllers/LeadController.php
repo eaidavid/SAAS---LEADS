@@ -45,6 +45,7 @@ final class LeadController
             $lead["whatsapp_phone"] = $this->normalizeWhatsappPhone($phone);
         }
         unset($lead);
+        $templates = $this->templates->allByType("whatsapp");
         $counts = $this->leads->countByStatus($filters);
         $projects = (new \App\Models\Project())->all();
         $imports = [];
@@ -59,6 +60,7 @@ final class LeadController
             "filters" => $filters,
             "projects" => $projects,
             "imports" => $imports,
+            "templates" => $templates,
         ]);
     }
 
@@ -178,6 +180,49 @@ final class LeadController
         }
 
         Response::redirect("/leads/show?id=" . $id);
+    }
+
+    public function updateStatus(Request $request): void
+    {
+        $id = (int) ($request->body["lead_id"] ?? 0);
+        $status = (string) ($request->body["status"] ?? "");
+        $returnUrl = (string) ($request->body["return_url"] ?? "/leads");
+        if ($returnUrl === "" || !str_starts_with($returnUrl, "/")) {
+            $returnUrl = "/leads";
+        }
+
+        if ($id <= 0) {
+            Response::redirect($returnUrl);
+            return;
+        }
+
+        $lead = $this->leads->find($id);
+        if ($lead === null) {
+            Response::redirect($returnUrl);
+            return;
+        }
+
+        $statuses = Config::get("leads.statuses", []);
+        if (!array_key_exists($status, $statuses)) {
+            Response::redirect($returnUrl);
+            return;
+        }
+
+        $current = (string) ($lead["status"] ?? "");
+        if ($current !== $status) {
+            $this->leads->update($id, ["status" => $status]);
+            $from = $statuses[$current] ?? $current;
+            $to = $statuses[$status] ?? $status;
+            $this->interactions->create([
+                "lead_id" => $id,
+                "user_id" => 0,
+                "type" => "status_change",
+                "message" => "Status changed from {$from} to {$to}.",
+                "date" => date("Y-m-d H:i:s"),
+            ]);
+        }
+
+        Response::redirect($returnUrl);
     }
 
     public function updateNotes(Request $request): void

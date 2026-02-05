@@ -217,6 +217,8 @@ final class Lead extends BaseModel
             "reviews_count",
             "city",
             "state",
+            "status",
+            "score",
         ];
         if (!in_array($orderBy, $allowed, true)) {
             $orderBy = "created_at";

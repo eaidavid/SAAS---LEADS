@@ -35,6 +35,7 @@ return function (Router $router): void {
     $router->get("/leads/show", "LeadController@show");
     $router->get("/leads/edit", "LeadController@edit");
     $router->post("/leads/update", "LeadController@update");
+    $router->post("/leads/status", "LeadController@updateStatus");
     $router->post("/leads/notes", "LeadController@updateNotes");
     $router->post("/leads/delete", "LeadController@delete");
     $router->post("/leads/interaction", "LeadController@addInteraction");
