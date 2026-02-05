@@ -34,11 +34,22 @@ final class Env
             if (!array_key_exists($key, $_ENV)) {
                 $_ENV[$key] = $value;
             }
+            if (!array_key_exists($key, $_SERVER)) {
+                $_SERVER[$key] = $value;
+            }
+            if (getenv($key) === false) {
+                putenv($key . "=" . $value);
+            }
         }
     }
 
     public static function get(string $key, ?string $default = null): ?string
     {
-        return $_ENV[$key] ?? $default;
+        $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+        if ($value === false || $value === null) {
+            return $default;
+        }
+
+        return $value;
     }
 }

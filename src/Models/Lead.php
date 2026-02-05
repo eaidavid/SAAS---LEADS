@@ -263,7 +263,9 @@ final class Lead extends BaseModel
 
     private function existsByDedupeKey(?int $projectId, string $dedupeKey): bool
     {
-        $stmt = Database::pdo()->prepare("SELECT id FROM {$this->table} WHERE project_id <=> :project_id AND dedupe_key = :dedupe_key LIMIT 1");
+        $driver = (string) Database::pdo()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $comparison = $driver === "pgsql" ? "IS NOT DISTINCT FROM" : "<=>";
+        $stmt = Database::pdo()->prepare("SELECT id FROM {$this->table} WHERE project_id {$comparison} :project_id AND dedupe_key = :dedupe_key LIMIT 1");
         $stmt->execute([
             "project_id" => $projectId,
             "dedupe_key" => $dedupeKey,
@@ -276,7 +278,7 @@ final class Lead extends BaseModel
     {
         $sqlState = (string) $e->getCode();
         $driverCode = $e->errorInfo[1] ?? null;
-        return $sqlState === "23000" || $driverCode === 1062;
+        return $sqlState === "23000" || $sqlState === "23505" || $driverCode === 1062;
     }
 
     private function dedupeBase(array $data): string

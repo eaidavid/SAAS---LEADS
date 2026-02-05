@@ -14,7 +14,7 @@ SaaS Leads organiza leads importados (Google Maps ou CSV), permite classificar p
 
 ## Stack
 - PHP 8.x
-- MySQL
+- Postgres (Supabase)
 - HTML + CSS
 
 ## Comecando
@@ -44,8 +44,8 @@ php -S localhost:8080 -t public
 - `GOOGLE_MAPS_API_KEY`
 
 ## Banco de dados
-- O schema esta em `database/schema.sql`.
-- O projeto usa MySQL por padrao.
+- Para Supabase, use `database/schema_postgres.sql`.
+- O schema MySQL original esta em `database/schema.sql`.
 
 ## Rotas principais
 - `/projects`
